@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>take picture</title>
+  </head>
+  <body>
+    <input type = 'submit' id='picButton'/>
+    <video id = 'video'></video>
+    <canvas id = 'canvas'></canvas>
+    <div id="images"/>
+      <script>
+/*video*/
+const video = document.getElementById('video');
+navigator.mediaDevices.getUserMedia({
+  video: {width:300, height:300},
+  audio: false
+}).then((mediaStream)=>{
+  video.srcObject = mediaStream; 
+  video.play();
+}).catch((err)=>{
+  console.log(err);
+});
+const button = document.getElementById('picButton');
+button.onclick=()=>{
+  const canvas = document.getElementById('canvas');
+  canvas.width= 300;
+  canvas.height = 300;
+  const context = canvas.getContext('2d');
+  context.drawImage(video, 0, 40, 100, 100);
+  const dataURL = canvas.toDataURL().replace('data:image/png;base64,', '');
+  fetch('/pic', {
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body:JSON.stringify({canvas: dataURL}),
+  });
+};
+const displayPic=()=>{
+  fetch("/pic").then(res=>
+    res.json()).then(eachPic=>{
+    const picLocation = document.getElementById('images');
+    const allPics = eachPic.reduce((acc, onePic)=>{
+      acc+=onePic;
+      return acc;
+    },'');
+    picLocation.innerHTML = allPics;
+    console.log("allPics", allPics);
+  });
+}
+window.setInterval(displayPic, 1000);
+      </script>
+  </body>
+</html>
